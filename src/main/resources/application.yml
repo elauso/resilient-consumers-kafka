@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: 'resilient-consumers-kafka-app'
+  main:
+    allow-bean-definition-overriding: true
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+      hibernate.format_sql: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_customer
+    username: customer
+    password: customer
+  cloud:
+    function:
+      definition: "customerCreatedConsumer"
+    stream:
+      kafka:
+        binder:
+          brokers: 'localhost:9092'
+          auto-create-topics: true
+          auto-add-partitions: true
+          consumer-properties:
+            max.poll.records: 20
+            key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value.deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+          dlq-producer-properties:
+            configuration.key.serializer: org.apache.kafka.common.serialization.StringSerializer
+            configuration.value.serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+        bindings:
+          customerCreatedConsumer-in-0:
+            consumer:
+              enable-dlq: true
+              dlq-name: 'queueing.example.customer.created.dlq'
+              auto-commit-offset: true
+              auto-commit-on-error: true
+      bindings:
+        customerCreatedConsumer-in-0:
+          destination: 'queueing.example.customer.created'
+          group: ${spring.application.name}-customer-created
+          content-type: application/json
+          consumer:
+            max-attempts: 233143323
+            default-retryable: true
+            retryable-exceptions:
+              org.springframework.dao.DataIntegrityViolationException: false
+toggle:
+  fake-api-error.enabled: false
+logging:
+  level:
+    org.springframework: INFO
+    net.elau.example.resilientconsumerskafka: DEBUG
