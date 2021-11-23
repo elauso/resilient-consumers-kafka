@@ -16,7 +16,7 @@ spring:
     password: customer
   cloud:
     function:
-      definition: "customerCreatedConsumer"
+      definition: "customerCreatedConsumer;customerLocalRegisteredProducer"
     stream:
       kafka:
         binder:
@@ -37,6 +37,8 @@ spring:
               dlq-name: 'queueing.example.customer.created.dlq'
               auto-commit-offset: true
               auto-commit-on-error: true
+              configuration:
+                max.poll.interval.ms: 10000
       bindings:
         customerCreatedConsumer-in-0:
           destination: 'queueing.example.customer.created'
@@ -47,8 +49,13 @@ spring:
             default-retryable: true
             retryable-exceptions:
               org.springframework.dao.DataIntegrityViolationException: false
+        customerLocalRegisteredProducer-out-0:
+          destination: 'queueing.example.customer.local.registered'
 toggle:
-  fake-api-error.enabled: false
+  fake-api-error:
+    enabled: true
+    error-interval-count: 3
+
 logging:
   level:
     org.springframework: INFO

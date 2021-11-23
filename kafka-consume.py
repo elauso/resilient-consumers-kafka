@@ -2,7 +2,7 @@ from kafka import KafkaConsumer
 from json import loads
 
 consumer = KafkaConsumer(
-    'queueing.example.customer.created.dlq',
+    'queueing.example.customer.local.registered',
      bootstrap_servers=['localhost:9092'],
      auto_offset_reset='earliest',
      enable_auto_commit=True,

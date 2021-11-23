@@ -1,6 +1,7 @@
 package net.elau.example.resilientconsumerskafka.event.stream.consumer
 
 import net.elau.example.resilientconsumerskafka.event.stream.message.CustomerCreatedEvent
+import net.elau.example.resilientconsumerskafka.exception.CustomerExistsException
 import net.elau.example.resilientconsumerskafka.mapper.CustomerMapper
 import net.elau.example.resilientconsumerskafka.service.CustomerService
 import org.slf4j.LoggerFactory
@@ -19,8 +20,16 @@ class CustomerCreatedConsumer(
     }
 
     override fun accept(customerCreatedEvent: CustomerCreatedEvent) {
-        log.debug("c=CustomerCreatedConsumer, m=accept, msg=Received event $customerCreatedEvent")
-        customerMapper.toDto(customerCreatedEvent).let { customerService.create(it) }
+        runCatching {
+            log.debug("c=CustomerCreatedConsumer, m=accept, msg=Received event $customerCreatedEvent")
+            customerMapper.toDto(customerCreatedEvent).let { customerService.create(it) }
+        }.onFailure {
+            log.error("c=CustomerCreatedConsumer, m=accept, error: Failed to process message[$customerCreatedEvent]: ${it.message}")
+            when (it) {
+                is CustomerExistsException -> log.warn("c=CustomerCreatedConsumer, m=accept, msg=Customer $customerCreatedEvent already processed")
+                else -> throw it
+            }
+        }
     }
 
     @KafkaListener(id = "customer-created-dlq", topics = ["queueing.example.customer.created.dlq"])

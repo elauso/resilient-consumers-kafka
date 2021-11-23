@@ -45,7 +45,6 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
     depends_on:
       - zookeeper
-#      - kafka-setup
       - kafka
 
   schema-registry-ui:
