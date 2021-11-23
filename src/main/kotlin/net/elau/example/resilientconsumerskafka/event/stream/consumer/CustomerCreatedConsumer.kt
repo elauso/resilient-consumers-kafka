@@ -22,7 +22,7 @@ class CustomerCreatedConsumer(
     override fun accept(customerCreatedEvent: CustomerCreatedEvent) {
         runCatching {
             log.debug("c=CustomerCreatedConsumer, m=accept, msg=Received event $customerCreatedEvent")
-            customerMapper.toDto(customerCreatedEvent).let { customerService.create(it) }
+            customerService.create(customerMapper.toDto(customerCreatedEvent))
         }.onFailure {
             log.error("c=CustomerCreatedConsumer, m=accept, error: Failed to process message[$customerCreatedEvent]: ${it.message}")
             when (it) {
